@@ -72,7 +72,7 @@ python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 
 # Install in editable mode
-pip install -e .
+" pip install -e . "
 ```
 
 > **Requirements:** Python 3.10+ · No third-party runtime dependencies (uses stdlib only)
