@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cybersentry"
+version = "1.0.0"
+description = "Python SOC Automation & Recon Toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["pytest>=8.0"]
+
+[project.scripts]
+cybersentry = "cybersentry.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
