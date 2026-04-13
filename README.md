@@ -64,7 +64,7 @@ $ cybersentry analyze samples/sample_auth.log
 
 ```bash
 # Clone the repository
-git clone https://github.com/M-MOHAAMED-IRFAN-MN/cybersentry.git
+git clone https://github.com/M-MOHAMED-IRFAN-MN/cybersentry.git
 cd cybersentry
 
 # (Optional) create a virtual environment
@@ -198,7 +198,7 @@ print(results["open_ports"])
 
 ## 📜 License
 
-MIT © 2025 (https://github.com/M-MOHAMED-IRFAN-MN)
+MIT © 2025 MOHAMED IRFAN
 
 ---
 
