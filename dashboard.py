@@ -15,11 +15,13 @@ from urllib.parse import urlparse, parse_qs
 DB_FILE = "skipper_alerts.db"
 LOG_FILE = "live_lab.log"
 
+
 # ── Database Setup ──────────────────────────────────────────────
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS alerts (
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS alerts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT,
         alert_type TEXT,
@@ -29,8 +31,10 @@ def init_db():
         status TEXT DEFAULT 'open',
         rule_name TEXT,
         attack_type TEXT
-    )""")
-    c.execute("""CREATE TABLE IF NOT EXISTS cases (
+    )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS cases (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         alert_id INTEGER,
         timestamp TEXT,
@@ -38,8 +42,10 @@ def init_db():
         status TEXT DEFAULT 'open',
         analyst TEXT DEFAULT 'Mohamed Irfan',
         notes TEXT
-    )""")
-    c.execute("""CREATE TABLE IF NOT EXISTS logs (
+    )"""
+    )
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT,
         source_ip TEXT,
@@ -48,52 +54,150 @@ def init_db():
         path TEXT,
         status_code TEXT,
         raw TEXT
-    )""")
+    )"""
+    )
     conn.commit()
 
     # Seed sample alerts if empty
     c.execute("SELECT COUNT(*) FROM alerts")
     if c.fetchone()[0] == 0:
         sample_alerts = [
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "BRUTE_FORCE", "172.16.0.99", "Critical",
-             "SSH brute force detected - 6 failed attempts in 30s", "open",
-             "SKP001 - SSH Brute Force Attack Detected", "Network Attack"),
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "SQL_INJECTION", "192.168.1.105", "High",
-             "SQL Injection attempt on /products.php - OR 1=1 payload", "open",
-             "SKP002 - SQL Injection Detected", "Web Attack"),
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "DIR_TRAVERSAL", "10.0.0.42", "High",
-             "Directory traversal attempt - /../../../etc/passwd", "open",
-             "SKP003 - Directory Traversal Detected", "Web Attack"),
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ENV_SCAN", "10.0.0.42", "Medium",
-             "Environment file scan detected - GET /.env", "open",
-             "SKP004 - Sensitive File Access Attempt", "Recon"),
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "WP_ATTACK", "172.16.0.99", "Critical",
-             "WordPress login brute force - POST /wp-login.php", "closed",
-             "SKP005 - WordPress Brute Force Detected", "Web Attack"),
-            (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "CONFIG_ACCESS", "192.168.1.105", "Medium",
-             "Config file access - /admin/config.php.bak", "closed",
-             "SKP006 - Backup Config File Access", "Recon"),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "BRUTE_FORCE",
+                "172.16.0.99",
+                "Critical",
+                "SSH brute force detected - 6 failed attempts in 30s",
+                "open",
+                "SKP001 - SSH Brute Force Attack Detected",
+                "Network Attack",
+            ),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "SQL_INJECTION",
+                "192.168.1.105",
+                "High",
+                "SQL Injection attempt on /products.php - OR 1=1 payload",
+                "open",
+                "SKP002 - SQL Injection Detected",
+                "Web Attack",
+            ),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "DIR_TRAVERSAL",
+                "10.0.0.42",
+                "High",
+                "Directory traversal attempt - /../../../etc/passwd",
+                "open",
+                "SKP003 - Directory Traversal Detected",
+                "Web Attack",
+            ),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "ENV_SCAN",
+                "10.0.0.42",
+                "Medium",
+                "Environment file scan detected - GET /.env",
+                "open",
+                "SKP004 - Sensitive File Access Attempt",
+                "Recon",
+            ),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "WP_ATTACK",
+                "172.16.0.99",
+                "Critical",
+                "WordPress login brute force - POST /wp-login.php",
+                "closed",
+                "SKP005 - WordPress Brute Force Detected",
+                "Web Attack",
+            ),
+            (
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "CONFIG_ACCESS",
+                "192.168.1.105",
+                "Medium",
+                "Config file access - /admin/config.php.bak",
+                "closed",
+                "SKP006 - Backup Config File Access",
+                "Recon",
+            ),
         ]
-        c.executemany("""INSERT INTO alerts
+        c.executemany(
+            """INSERT INTO alerts
             (timestamp, alert_type, ip, severity, description, status, rule_name, attack_type)
-            VALUES (?,?,?,?,?,?,?,?)""", sample_alerts)
+            VALUES (?,?,?,?,?,?,?,?)""",
+            sample_alerts,
+        )
 
     # Seed sample logs if empty
     c.execute("SELECT COUNT(*) FROM logs")
     if c.fetchone()[0] == 0:
         sample_logs = [
-            ("2026/04/13 22:08:35", "10.0.0.42", "server", "GET", "/.env", "404", '10.0.0.42 - - "GET /.env HTTP/1.1" 404'),
-            ("2026/04/13 22:08:37", "172.16.0.99", "server", "POST", "/wp-login.php", "200", '172.16.0.99 - - "POST /wp-login.php HTTP/1.1" 200'),
-            ("2026/04/13 22:08:39", "185.143.223.1", "server", "POST", "/search", "200", '185.143.223.1 - - "POST /search HTTP/1.1" 200'),
-            ("2026/04/13 22:08:41", "192.168.1.105", "server", "GET", "/logo.png", "200", '192.168.1.105 - - "GET /logo.png HTTP/1.1" 200'),
-            ("2026/04/13 22:08:43", "185.143.223.1", "server", "GET", "/products.php?id=1 OR 1=1", "200", '185.143.223.1 - - "GET /products.php?id=1 OR 1=1 HTTP/1.1" 200'),
-            ("2026/04/13 22:08:50", "172.16.0.99", "server", "GET", "/../../../etc/passwd", "200", '172.16.0.99 - - "GET /../../../etc/passwd HTTP/1.1" 200'),
+            (
+                "2026/04/13 22:08:35",
+                "10.0.0.42",
+                "server",
+                "GET",
+                "/.env",
+                "404",
+                '10.0.0.42 - - "GET /.env HTTP/1.1" 404',
+            ),
+            (
+                "2026/04/13 22:08:37",
+                "172.16.0.99",
+                "server",
+                "POST",
+                "/wp-login.php",
+                "200",
+                '172.16.0.99 - - "POST /wp-login.php HTTP/1.1" 200',
+            ),
+            (
+                "2026/04/13 22:08:39",
+                "185.143.223.1",
+                "server",
+                "POST",
+                "/search",
+                "200",
+                '185.143.223.1 - - "POST /search HTTP/1.1" 200',
+            ),
+            (
+                "2026/04/13 22:08:41",
+                "192.168.1.105",
+                "server",
+                "GET",
+                "/logo.png",
+                "200",
+                '192.168.1.105 - - "GET /logo.png HTTP/1.1" 200',
+            ),
+            (
+                "2026/04/13 22:08:43",
+                "185.143.223.1",
+                "server",
+                "GET",
+                "/products.php?id=1 OR 1=1",
+                "200",
+                '185.143.223.1 - - "GET /products.php?id=1 OR 1=1 HTTP/1.1" 200',
+            ),
+            (
+                "2026/04/13 22:08:50",
+                "172.16.0.99",
+                "server",
+                "GET",
+                "/../../../etc/passwd",
+                "200",
+                '172.16.0.99 - - "GET /../../../etc/passwd HTTP/1.1" 200',
+            ),
         ]
-        c.executemany("""INSERT INTO logs (timestamp, source_ip, dest_ip, method, path, status_code, raw)
-            VALUES (?,?,?,?,?,?,?)""", sample_logs)
+        c.executemany(
+            """INSERT INTO logs (timestamp, source_ip, dest_ip, method, path, status_code, raw)
+            VALUES (?,?,?,?,?,?,?)""",
+            sample_logs,
+        )
 
     conn.commit()
     conn.close()
+
 
 # Parse live_lab.log for fresh alerts
 def parse_live_log():
@@ -106,10 +210,13 @@ def parse_live_log():
                 line = line.strip()
                 if not line:
                     continue
-                events.append({"raw": line, "time": datetime.now().strftime("%H:%M:%S")})
+                events.append(
+                    {"raw": line, "time": datetime.now().strftime("%H:%M:%S")}
+                )
     except:
         pass
     return events
+
 
 def get_alerts(status=None):
     conn = sqlite3.connect(DB_FILE)
@@ -123,17 +230,22 @@ def get_alerts(status=None):
     conn.close()
     return rows
 
+
 def get_logs(search=""):
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     if search:
-        c.execute("SELECT * FROM logs WHERE raw LIKE ? ORDER BY id DESC LIMIT 100", (f"%{search}%",))
+        c.execute(
+            "SELECT * FROM logs WHERE raw LIKE ? ORDER BY id DESC LIMIT 100",
+            (f"%{search}%",),
+        )
     else:
         c.execute("SELECT * FROM logs ORDER BY id DESC LIMIT 100")
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return rows
+
 
 def get_cases():
     conn = sqlite3.connect(DB_FILE)
@@ -144,6 +256,7 @@ def get_cases():
     conn.close()
     return rows
 
+
 def close_alert(alert_id):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -151,13 +264,17 @@ def close_alert(alert_id):
     conn.commit()
     conn.close()
 
+
 def create_case(alert_id, title):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("INSERT INTO cases (alert_id, timestamp, title, status) VALUES (?,?,?,?)",
-              (alert_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), title, "open"))
+    c.execute(
+        "INSERT INTO cases (alert_id, timestamp, title, status) VALUES (?,?,?,?)",
+        (alert_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), title, "open"),
+    )
     conn.commit()
     conn.close()
+
 
 # ── HTML Template ────────────────────────────────────────────────
 def render_page(title, content, active="monitoring"):
@@ -171,7 +288,9 @@ def render_page(title, content, active="monitoring"):
     nav_html = ""
     for key, icon, label in nav_items:
         active_class = "active" if key == active else ""
-        nav_html += f'<a href="/{key}" class="nav-item {active_class}">{icon} {label}</a>'
+        nav_html += (
+            f'<a href="/{key}" class="nav-item {active_class}">{icon} {label}</a>'
+        )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -288,7 +407,7 @@ def page_monitoring(tab="main"):
         for a in alerts:
             action = ""
             if show_action:
-                action = f'''
+                action = f"""
                   <form method="POST" action="/close_alert" style="display:inline">
                     <input type="hidden" name="id" value="{a['id']}">
                     <button class="action-btn btn-close" type="submit">Close</button>
@@ -297,7 +416,7 @@ def page_monitoring(tab="main"):
                     <input type="hidden" name="alert_id" value="{a['id']}">
                     <input type="hidden" name="title" value="{a['rule_name']}">
                     <button class="action-btn btn-take" type="submit">Take</button>
-                  </form>'''
+                  </form>"""
             rows += f"""<tr>
               <td>{sev_badge(a['severity'])}</td>
               <td>{a['timestamp']}</td>
@@ -327,13 +446,16 @@ def page_monitoring(tab="main"):
         if not cases:
             table = '<div class="empty"><h3>Investigation Channel Empty</h3><p>Take ownership of an alert to start investigating</p></div>'
         else:
-            rows = "".join(f"<tr><td>{c['id']}</td><td>{c['title']}</td><td>{c['analyst']}</td><td>{c['timestamp']}</td><td><span class='badge badge-open'>{c['status']}</span></td></tr>" for c in cases)
+            rows = "".join(
+                f"<tr><td>{c['id']}</td><td>{c['title']}</td><td>{c['analyst']}</td><td>{c['timestamp']}</td><td><span class='badge badge-open'>{c['status']}</span></td></tr>"
+                for c in cases
+            )
             table = f"""<table class="table">
               <thead><tr><th>Case ID</th><th>Title</th><th>Analyst</th><th>Date</th><th>Status</th></tr></thead>
               <tbody>{rows}</tbody></table>"""
 
     total = len(get_alerts())
-    critical = len([a for a in get_alerts() if a['severity'] == 'Critical'])
+    critical = len([a for a in get_alerts() if a["severity"] == "Critical"])
 
     content = f"""
     <div class="topbar">
@@ -395,7 +517,7 @@ def page_cases():
     cases = get_cases()
     rows = ""
     for c in cases:
-        status_class = "open" if c['status'] == 'open' else "closed"
+        status_class = "open" if c["status"] == "open" else "closed"
         rows += f"""<tr>
           <td>{c['id']}</td>
           <td>{c['title']}</td>
@@ -451,18 +573,47 @@ def page_endpoint():
 
 def page_threat():
     threat_data = [
-        ("Apr, 12, 2026, 03:55 AM", "URL", "http://115.61.118.193:33166/bin.sh", "malware_download"),
-        ("Apr, 12, 2026, 03:54 AM", "URL", "https://port5-send.plus8moran.in.net/0Sfe317c-0...", "malware_download"),
-        ("Apr, 12, 2026, 03:52 AM", "URL", "http://42.227.204.231:36096/bin.sh", "malware_download"),
+        (
+            "Apr, 12, 2026, 03:55 AM",
+            "URL",
+            "http://115.61.118.193:33166/bin.sh",
+            "malware_download",
+        ),
+        (
+            "Apr, 12, 2026, 03:54 AM",
+            "URL",
+            "https://port5-send.plus8moran.in.net/0Sfe317c-0...",
+            "malware_download",
+        ),
+        (
+            "Apr, 12, 2026, 03:52 AM",
+            "URL",
+            "http://42.227.204.231:36096/bin.sh",
+            "malware_download",
+        ),
         ("Apr, 12, 2026, 03:49 AM", "IP", "185.143.223.1", "c2_server"),
         ("Apr, 12, 2026, 03:44 AM", "IP", "172.16.0.99", "brute_force"),
-        ("Apr, 12, 2026, 03:43 AM", "Hash", "83e0cfc95de1153d405e839e53d408f5", "malware"),
+        (
+            "Apr, 12, 2026, 03:43 AM",
+            "Hash",
+            "83e0cfc95de1153d405e839e53d408f5",
+            "malware",
+        ),
         ("Apr, 12, 2026, 03:40 AM", "Domain", "windows-update.site", "phishing"),
-        ("Apr, 12, 2026, 03:35 AM", "URL", "http://42.239.252.16:47389/bin.sh", "malware_download"),
+        (
+            "Apr, 12, 2026, 03:35 AM",
+            "URL",
+            "http://42.239.252.16:47389/bin.sh",
+            "malware_download",
+        ),
     ]
     rows = ""
     for date, dtype, data, tag in threat_data:
-        tag_color = "var(--red)" if "malware" in tag else "var(--orange)" if "c2" in tag else "var(--yellow)"
+        tag_color = (
+            "var(--red)"
+            if "malware" in tag
+            else "var(--orange)" if "c2" in tag else "var(--yellow)"
+        )
         rows += f"""<tr>
           <td style="color:var(--muted);font-size:12px">{date}</td>
           <td><span class="badge badge-open">{dtype}</span></td>
