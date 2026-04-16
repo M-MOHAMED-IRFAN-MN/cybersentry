@@ -70,7 +70,9 @@ def cmd_intel(args):
             print(f"[!] {r['ip']}: {r['error']}")
         else:
             risk = r["risk_level"]
-            icon = "🔴" if risk == "HIGH" else "🟡" if risk == "MEDIUM" else "🟢"
+            icon = (
+                "[HIGH]" if risk == "HIGH" else "[MED]" if risk == "MEDIUM" else "[LOW]"
+            )
             print(
                 f"  {icon} {r['ip']:>15}  Score: {r['abuse_score']:>3}  [{risk}]  Country: {r['country']}  ISP: {r['isp']}"
             )
