@@ -1,21 +1,24 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "skipper"
 version = "1.0.0"
-description = "Captain's SOC Toolkit – Free SIEM-like monitoring and recon"
+authors = [{ name = "M-MOHAMED-IRFAN-MN" }]
+description = "A free, open-source SOC automation and recon toolkit"
 readme = "README.md"
-requires-python = ">=3.8"
-authors = [
-    { name = "M-MOHAMED-IRFAN-MN" }
-]
-license = { text = "MIT" }
+requires-python = ">=3.7"
+license = "MIT"
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/M-MOHAMED-IRFAN-MN/skipper"
+Repository = "https://github.com/M-MOHAMED-IRFAN-MN/skipper.git"
 
 [project.scripts]
 skipper = "skipper.cli:main"
 
 [tool.setuptools]
+package-dir = {"" = "src"}
 packages = ["skipper"]
