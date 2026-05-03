@@ -6,9 +6,9 @@ import argparse
 import json
 import sys
 
-from skipper import scanner, threat_intel, log_analyzer, reporter, monitor
+from skipper import scanner, threat_intel, log_analyzer, reporter
 from skipper.monitor import LiveMonitor
-
+from skipper import lab
 
 BANNER = r"""
    _____ _    _                  
@@ -114,7 +114,7 @@ def cmd_monitor(args):
     print(f"[*] Starting real-time monitor on: {args.logfile}")
     try:
         mon = LiveMonitor(args.logfile, verbose=args.verbose)
-        mon.start()
+        mon.start(once=args.once)
     except KeyboardInterrupt:
         print("\n[!] Monitor stopped by user.")
     except Exception as e:
@@ -144,7 +144,7 @@ simulator so you can practice threat detection without paying a cent.
 ┌──────────────────────────────────────────────────────────────────┐
 │ 2. START THE ATTACK SIMULATOR (Terminal 2)                       │
 ├──────────────────────────────────────────────────────────────────┤
-│   python skipper/lab_simulator.py live_lab.log               │
+│   python src/skipper/lab_simulator.py live_lab.log               │
 │                                                                    │
 │   (This generates SSH brute‑force, SQLi, path traversal etc.)     │
 └──────────────────────────────────────────────────────────────────┘
@@ -169,7 +169,7 @@ simulator so you can practice threat detection without paying a cent.
 │   skipper guide               – Show this tutorial            │
 └──────────────────────────────────────────────────────────────────┘
 
-Want to contribute? Visit: https://github.com/M-MOHAMED-IRFAN-MN/skipper
+Want to contribute? Visit: https://github.com/M-MOHAMED-IRFAN-MN/skipper-cli
 """
     print(guide_text)
 
@@ -223,11 +223,30 @@ def build_parser() -> argparse.ArgumentParser:
     monitor_p.add_argument(
         "-v", "--verbose", action="store_true", help="Show all lines, not just alerts"
     )
+    monitor_p.add_argument(
+        "--once", action="store_true", help="Read existing file and exit (no tailing)"
+    )
+
     monitor_p.set_defaults(func=cmd_monitor)
 
     # guide
     guide_p = sub.add_parser("guide", help="Show tutorial for the free SOC lab")
     guide_p.set_defaults(func=cmd_guide)
+
+    # lab
+    lab_p = sub.add_parser(
+        "lab", help="Start integrated SOC training lab (monitor + simulator)"
+    )
+    lab_p.add_argument(
+        "logfile",
+        nargs="?",
+        default="skipper_lab.log",
+        help="Log file to use (default: skipper_lab.log)",
+    )
+    lab_p.add_argument(
+        "-v", "--verbose", action="store_true", help="Show all log lines"
+    )
+    lab_p.set_defaults(func=cmd_lab)
 
     return p
 
@@ -241,3 +260,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def cmd_lab(args):
+    """Start the integrated SOC training lab."""
+    lab.start_lab(logfile=args.logfile, verbose=args.verbose)
